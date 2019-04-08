@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# This scipt will install IPFS software and establish initial settings.
+# This must be executed with root pivileges or with sudo.
+# PREREQS: A fresh Raspbian OS installed with NOOBS or via a purchased Raspbian SD-Card.
+# Goto https://projects.raspberrypi.org/en/projects/noobs-install or google for more info.
+
+if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
+
+WAIT=1                               # Set to 1 to wait fo confimation to continue each step
+STORAGE_MAX=10GB                     # Set to the maximum amount of space to use for IPFS
+LIMITS=/etc/security/limits.conf     # Security limits config file location
+
+if [ ! -f updated ]; then
+  # Make sure the system is fully updated
+  echo "Updating the OS (Operating System). When the popup appears, acknowledge it..."
+  apt-get -y update && apt-get -y dist-upgrade
+  echo ""
+  echo "The system needs to reboot. Afterwards, log back in and rerun this script."
+  read -n 1 -p " Press any key to reboot..." key
+  touch updated
+  reboot
+fi
+
+if [ ! -e /etc/apt/sources.list.d/siderus.list ]; then
+  echo "Installing credentials for siderus software repository..."
+  apt install -y apt-transport-https
+  curl https://get.siderus.io/key.public.asc | apt-key add -
+  echo "deb https://get.siderus.io/ apt/" | tee -a /etc/apt/sources.list.d/siderus.list
+  apt update
+  echo ""
+  if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+fi
+
+echo "Installing ufw (Uncomplicated FireWall)..."
+apt-get -y install ufw
+ufw allow 4001/tcp
+ufw allow 22/tcp
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+
+echo "Installing IPFS and supporting packages..."
+apt-get -y install ipfs tmux
+apt -y autoremove
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+
+echo "Creating the user account for IPFS..."
+useradd -m -s /bin/bash ipfs
+mkdir /home/ipfs/.ipfs
+
+echo "Creating basic IPFS configuration file with $STORAGE_MAX storage space..."
+(
+cat <<CONFIG
+"Datastore": {
+    "StorageMax": "$STORAGE_MAX",
+    "StorageGCWatermark": 90,
+    "GCPeriod": "1h",
+    "Spec": {
+      "mounts": []
+      }
+    }
+CONFIG
+) > /home/ipfs/.ipfs/config
+chown -R ipfs.ipfs /home/ipfs
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+
+echo "Adjusting security limits in $LIMITS..."
+sed -i 's/^# End of file$//g' $LIMITS  # Not required, but I'll move this after new params
+echo "* soft nofile 4096" >> $LIMITS
+echo "* hard nofile 4096" >> $LIMITS
+echo "# End of file" >> $LIMITS
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+
+echo "Creating SystemD unit to start IPFS on reboot..."
+(
+cat <<SYSD_UNIT
+[Unit]
+Description=IPFS daemon
+After=network.target
+
+[Service]
+User=ipfs
+Environment="IPFS_PATH=/home/ipfs/.ipfs"
+Environment="IPFS_FD_MAX=4096"
+ExecStart=/usr/bin/ipfs daemon --enable-namesys-pubsub
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+SYSD_UNIT
+) > /etc/systemd/system/ipfs.service
+
+systemctl enable ipfs
+systemctl start ipfs
+
+echo "IPFS is now installed on this system."
