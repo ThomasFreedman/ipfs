@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# This scipt will install IPFS software and establish initial settings.
-# This must be executed with root pivileges or with sudo.
+# This script will install IPFS software and establish initial settings.
+# This must be executed with root privileges or with sudo.
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
-WAIT=0                               # Set to 1 to wait fo confimation to continue each step
+WAIT=0                               # Set to 1 to wait fo confirmation to continue each step
 
-LIMITS=/etc/security/limits.conf     # Security limits config file location
 CONFIG=/home/ipfs/.ipfs/config       # IPFS configuration file
 
 if [ "$1" != "" ]; then              # Was a command line parameter provided?
-  if [ "$1" -ge 0 ] 2>/dev/null      # Yes. Was it a positive number?
+  if ! [ -z "${1//[0-9]}" ]          # Yes. Was it a positive number?
   then                               # No. Print error and exit
     echo "Please enter a positive integer for StorageMax parameter (gigabytes)"
     exit 1
@@ -27,7 +26,7 @@ fi
 if [ ! -f updated ]; then
   # Make sure the system is fully updated
   echo "Updating the OS (Operating System). When the popup appears, acknowledge it..."
-  apt-get -y update && apt-get -y dist-upgrade
+  apt-get -y update && apt-get -y upgrade
   echo ""
   echo "The system needs to reboot. Afterwards, log back in and rerun this script."
   read -n 1 -p " Press any key to reboot..." key
@@ -45,16 +44,15 @@ if [ ! -e /etc/apt/sources.list.d/siderus.list ]; then
   if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 fi
 
-echo "Installing ufw (Uncomplicated FireWall)..."
-apt-get -y install ufw
-ufw allow 4001/tcp
-ufw allow 22/tcp
+echo "Installing IPFS and supporting packages..."
+apt-get -y install ipfs tmux curl ufw
+apt -y autoremove
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
-echo "Installing IPFS and supporting packages..."
-apt-get -y install ipfs tmux
-apt -y autoremove
+echo "Opening required firewall ports..."
+ufw allow 4001/tcp
+ufw allow 22/tcp
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
@@ -72,14 +70,6 @@ sed -i "s/~/\"/g" $CONFIG
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
-echo "Adjusting security limits in $LIMITS..."
-sed -i 's/^# End of file$//g' $LIMITS  # Not required, but I'll move this after new params
-echo "* soft nofile 4096" >> $LIMITS
-echo "* hard nofile 4096" >> $LIMITS
-echo "# End of file" >> $LIMITS
-echo ""
-if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
-
 echo "Creating SystemD unit to start IPFS on reboot..."
 (
 cat <<SYSD_UNIT
@@ -89,8 +79,9 @@ After=network.target
 
 [Service]
 User=ipfs
-Environment="IPFS_PATH=/home/ipfs/.ipfs"
+LimitNOFILE=65536
 Environment="IPFS_FD_MAX=4096"
+Environment="IPFS_PATH=/home/ipfs/.ipfs"
 ExecStart=/usr/bin/ipfs daemon --enable-namesys-pubsub
 Restart=on-failure
 
