@@ -36,7 +36,7 @@ fi
 
 if [ ! -e /etc/apt/sources.list.d/siderus.list ]; then
   echo "Installing credentials for siderus software repository..."
-  apt install -y apt-transport-https
+  apt install -y apt-transport-https curl
   curl https://get.siderus.io/key.public.asc | apt-key add -
   echo "deb https://get.siderus.io/ apt/" | tee -a /etc/apt/sources.list.d/siderus.list
   apt update
@@ -45,7 +45,7 @@ if [ ! -e /etc/apt/sources.list.d/siderus.list ]; then
 fi
 
 echo "Installing IPFS and supporting packages..."
-apt-get -y install ipfs tmux curl ufw
+apt-get -y install ipfs tmux ufw
 apt -y autoremove
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
