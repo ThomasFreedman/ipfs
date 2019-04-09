@@ -5,13 +5,24 @@
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
-WAIT=1                               # Set to 1 to wait fo confimation to continue each step
+WAIT=0                               # Set to 1 to wait fo confimation to continue each step
 
-FREE=`df --output=avail -B 1 / | tail -n 1` # Free space in bytes on root partition
-MAX=`expr $FREE / 1320000000`        # Approximately 75% of free space (in GB)
-printf -v STORAGE_MAX %dG $MAX       # Format the StorageMax parameter value
 LIMITS=/etc/security/limits.conf     # Security limits config file location
 CONFIG=/home/ipfs/.ipfs/config       # IPFS configuration file
+
+if [ "$1" != "" ]; then              # Was a command line parameter provided?
+  if [ "$1" -ge 0 ] 2>/dev/null      # Yes. Was it a positive number?
+  then                               # No. Print error and exit
+    echo "Please enter a positive integer for StorageMax parameter (gigabytes)"
+    exit 1
+  else                               # Command line parameter overrides default storageMax
+    STORAGE_MAX="$1G"
+  fi
+else                                 # No command line parameter, so calculate storageMax
+  FREE=`df --output=avail -B 1 / | tail -n 1` # Free space in bytes on root partition
+  MAX=`expr $FREE / 1320000000`      # Approximately 75% of free space (in GB)
+  printf -v STORAGE_MAX %dG $MAX     # Format the StorageMax parameter value
+fi
 
 if [ ! -f updated ]; then
   # Make sure the system is fully updated
