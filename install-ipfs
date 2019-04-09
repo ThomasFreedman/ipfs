@@ -2,14 +2,16 @@
 
 # This scipt will install IPFS software and establish initial settings.
 # This must be executed with root pivileges or with sudo.
-# PREREQS: A fresh Raspbian OS installed with NOOBS or via a purchased Raspbian SD-Card.
-# Goto https://projects.raspberrypi.org/en/projects/noobs-install or google for more info.
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
 WAIT=1                               # Set to 1 to wait fo confimation to continue each step
-STORAGE_MAX=10GB                     # Set to the maximum amount of space to use for IPFS
+
+FREE=`df --output=avail -B 1 / | tail -n 1` # Free space in bytes on root partition
+MAX=`expr $FREE / 1320000000`        # Approximately 75% of free space (in GB)
+printf -v STORAGE_MAX %dG $MAX       # Format the StorageMax parameter value
 LIMITS=/etc/security/limits.conf     # Security limits config file location
+CONFIG=/home/ipfs/.ipfs/config       # IPFS configuration file
 
 if [ ! -f updated ]; then
   # Make sure the system is fully updated
@@ -45,24 +47,17 @@ apt -y autoremove
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
-echo "Creating the user account for IPFS..."
+echo "Creating the ipfs user account and initializing IPFS..."
 useradd -m -s /bin/bash ipfs
 mkdir /home/ipfs/.ipfs
-
-echo "Creating basic IPFS configuration file with $STORAGE_MAX storage space..."
-(
-cat <<CONFIG
-"Datastore": {
-    "StorageMax": "$STORAGE_MAX",
-    "StorageGCWatermark": 90,
-    "GCPeriod": "1h",
-    "Spec": {
-      "mounts": []
-      }
-    }
-CONFIG
-) > /home/ipfs/.ipfs/config
 chown -R ipfs.ipfs /home/ipfs
+runuser -l ipfs -c 'ipfs init > ~/.ipfs/init.log 2>&1'   # Initialize IPFS and log output
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
+
+echo "Setting maximum IPFS storage to $STORAGE_MAX in config file..."
+sed -i "s/^\s*\"StorageMax.*$/    ~StorageMax~: ~$STORAGE_MAX~,/g" $CONFIG
+sed -i "s/~/\"/g" $CONFIG
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
