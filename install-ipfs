@@ -6,6 +6,7 @@
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
 WAIT=0                               # Set to 1 to wait fo confirmation to continue each step
+DISTUP=0                             # Set to 1 to do a dist-upgrade
 
 CONFIG=/home/ipfs/.ipfs/config       # IPFS configuration file
 
@@ -23,15 +24,27 @@ else                                 # No command line parameter, so calculate s
   printf -v STORAGE_MAX %dG $MAX     # Format the StorageMax parameter value
 fi
 
-if [ ! -f updated ]; then
-  # Make sure the system is fully updated
-  echo "Updating the OS (Operating System). When the popup appears, acknowledge it..."
-  apt-get -y update && apt-get -y upgrade
+if [ ! -f ready4ipfs ]; then
+  # Make sure the system is fully updated and configured for network access
   echo ""
-  echo "The system needs to reboot. Afterwards, log back in and rerun this script."
-  read -n 1 -p " Press any key to reboot..." key
-  touch updated
-  reboot
+  echo "The system must be configured, at least to setup networking."
+  echo "REBOOT if raspi-config asks, then run this again when rebooted."
+  echo "You can just exit raspi-config the second time, don't reboot."
+  read -n 1 -p "Press any key to launch the raspi-config utility..." key
+  raspi-config
+  echo "Updating the OS (Operating System)..."
+  apt-get -y update
+  apt-get -y upgrade
+  touch ready4ipfs
+  if [ $DISTUP == 1 ]; then
+    echo ""
+    echo "Performing a distribution upgrade, which may bump OS / kernel version..."
+    apt-get -y dist-upgrade
+    echo ""
+    echo "Need to reboot. Afterwards, rerun this script to finish IPFS installation."
+    read -n 1 -p "Press ^C to abort, or any other key to reboot..." key
+    reboot
+  fi
 fi
 
 if [ ! -e /etc/apt/sources.list.d/siderus.list ]; then
@@ -76,7 +89,6 @@ cat <<SYSD_UNIT
 [Unit]
 Description=IPFS daemon
 After=network.target
-
 [Service]
 User=ipfs
 LimitNOFILE=65536
@@ -84,7 +96,6 @@ Environment="IPFS_FD_MAX=4096"
 Environment="IPFS_PATH=/home/ipfs/.ipfs"
 ExecStart=/usr/bin/ipfs daemon --enable-namesys-pubsub
 Restart=on-failure
-
 [Install]
 WantedBy=multi-user.target
 SYSD_UNIT
