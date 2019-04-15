@@ -61,7 +61,9 @@ fi
 if [ ! -e /usr/local/bin/go$GOVER.linux-armv6l.tar.gz ]; then
   pushd /usr/local/bin
   echo "Installing binary golang version $GOVER from googleapis. Patience is required..."
-  # Here is a better binary source: https://dist.ipfs.io/go-ipfs/v0.4.19/go-ipfs_v0.4.19_linux-arm64.tar.gz
+  # Using the source: https://dist.ipfs.io/go-ipfs/v0.4.19/go-ipfs_v0.4.19_linux-arm64.tar.gz
+  # is much faster than go, however it is only a specific version, whereas go approach will
+  # get latest version. Question is, do we trust google to deliver a clean version??
   wget https://storage.googleapis.com/golang/go$GOVER.linux-armv6l.tar.gz
   tar -C /usr/local -xzf go$GOVER.linux-armv6l.tar.gz
   mkdir /root/go
@@ -77,6 +79,7 @@ if [ ! -e /usr/local/bin/go$GOVER.linux-armv6l.tar.gz ]; then
   if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 fi
 
+# This will download and compile the ipfs-update go program and install ipfs 
 echo "Installing IPFS and supporting packages. More patience is required..."
 apt-get -y install tmux ufw
 apt -y autoremove
