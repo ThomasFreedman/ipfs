@@ -66,7 +66,7 @@ if [ ! -e /usr/local/bin/go$GOVER.linux-armv6l.tar.gz ]; then
   tar -C /usr/local -xzf go$GOVER.linux-armv6l.tar.gz
   mkdir /root/go
   echo 'export GOPATH=/home/$USER/go' >> /usr/local/bin/goInit
-  echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' > /usr/local/bin/goInit
+  echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
 
   echo "export GOPATH=/root/go" >> /root/.profile
   echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
