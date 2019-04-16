@@ -32,9 +32,11 @@ if [ ! -f ready4ipfs ]; then
   echo "You can just exit raspi-config the second time, don't reboot."
   read -n 1 -p "Press any key to launch the raspi-config utility..." key
   raspi-config
-  echo "Updating the OS (Operating System)..."
+  echo "Updating the OS (Operating System) and required packages..."
+  apt-get -y install git ufw tmux
   apt-get -y update
   apt-get -y upgrade
+  apt -y autoremove
   touch ready4ipfs
   if [ $DISTUP == 1 ]; then
     echo ""
@@ -80,9 +82,7 @@ if [ ! -e /usr/local/bin/go$GOVER.linux-armv6l.tar.gz ]; then
 fi
 
 # This will download and compile the ipfs-update go program and install ipfs 
-echo "Installing IPFS and supporting packages. More patience is required..."
-apt-get -y install git ufw tmux
-apt -y autoremove
+echo "Installing IPFS. More patience is required..."
 runuser -l ipfs -c 'go get -u github.com/ipfs/ipfs-update'
 runuser -l ipfs -c 'ipfs-update install latest'
 runuser -l ipfs -c 'ipfs init > ~/.ipfs/init.log 2>&1'   # Initialize IPFS and log output
