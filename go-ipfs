@@ -5,7 +5,7 @@
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
-WAIT=1                               # Set to 1 to wait fo confirmation to continue each step
+WAIT=0                               # Set to 1 to wait fo confirmation to continue each step
 DISTUP=0                             # Set to 1 to do a dist-upgrade
 GOVER=1.10                           # Go language version to install
 CONFIG=/home/ipfs/.ipfs/config       # IPFS configuration file
@@ -81,7 +81,7 @@ fi
 
 # This will download and compile the ipfs-update go program and install ipfs 
 echo "Installing IPFS and supporting packages. More patience is required..."
-apt-get -y install tmux ufw
+apt-get -y install git ufw tmux
 apt -y autoremove
 runuser -l ipfs -c 'go get -u github.com/ipfs/ipfs-update'
 runuser -l ipfs -c 'ipfs-update install latest'
