@@ -2,6 +2,8 @@
 
 # This script will install IPFS software and establish initial settings.
 # This must be executed with root privileges or with sudo.
+# TODO: Combine this and install-ipfs scripts and use getopt to parse cmd line args.
+#       use gvm to manage golang version.
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
