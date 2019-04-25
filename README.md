@@ -12,11 +12,21 @@ I wouldn't say installing any OS is easy for grandma. Depending on the chosen OS
 
 Once IPFS is installed, which is what these scripts do with almost no human intervention, the next task to accomplish is getting content off from centralized media platforms and onto IPFS. That requires standards and conventions for pinning, metadata capture indexing. 
 
-Currently there are 3 IPFS installtion scripts:
-  **go-ipfs** 	        Installer for golang based installtion for RPi3
-	**install-ipfs** 	    Installer for siderus / apt installation for RPi3
-	**go-ipfs-amd64** 	  Installer for 64 bit Linux OS (only tested with Debian) using golang
+Currently there are 3 IPFS installtion scripts that automate the steps described on http://sitepins.net/guides/install-ipfs:
+  	**go-ipfs** 	        Installer for golang based installtion for RPi3
+	**install-ipfs** 	Installer for siderus / apt installation for RPi3
+	**go-ipfs-amd64** 	Installer for 64 bit Linux OS (only tested with Debian) using golang
   
 Once you have your base operating ststem installed, copy one of these installers to your target system and run it to install IPFS. These are bash shell scripts, and must be run as root or with a sudo prefix. No command line arguments are necessary. They will create an "ipfs" account you can login with, set the maximum space devoted to IPFS storage to 75% of available disk space, and create an init.log file in /home/ipfs/.ipfs/ with the IPFS node hash ID. 
 
-The defaults used are defined at the top of the script, such as whether to pause after each step during installation (WAIT=1) or whether to perform a distribution upgrade (DIST=1). 
+There are variables defined at the top of the script you can set, but the defaults for these are probably fine. 
+
+    WAIT=0                               # Set to 1 to pause after each step
+    SYSD=1                               # Set to 1 to use systemd, 0 for @reboot & cron to run ipfs on startup
+    DISTUP=0                             # Set to 1 to do a OS distribution upgrade
+    GOVER=1.10.1                         # Go language version to install
+
+The Go language seems to change versions regularly, and it may be necessary to change this if you see errors the version is unavailable. I am not aware of a method to install "the latest" version of Go, and if there were it may break the ipfs-update program if it isn't compatible with the latest Go language version.
+
+The amd64 installer also has a setting for the method to start IPFS upon OS startup. The default is SYSD=1 to use systemd. If set to 0 the alternate method of using @reboot with cron is used.
+ 
