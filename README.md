@@ -10,7 +10,7 @@ Each have their merrits and issues. These scripts provide a "grandma just button
 
 I wouldn't say installing any OS is easy for grandma. Depending on the chosen OS some are easier than others. The main focus here is getting IPFS installed on a fresh OS installation, not what it takes to get the base OS installed.
 
-Once IPFS is installed, which is what these scripts do with almost no human intervention, the next task to accomplish is getting content off from centralized media platforms and onto IPFS. That requires standards and conventions for pinning, metadata capture indexing. 
+Once IPFS is installed, which is what these scripts do with almost no human intervention, the next task to accomplish is getting content off from centralized media platforms and onto IPFS. That requires standards and conventions for pinning, metadata capture and indexing. 
 
 Currently there are 3 IPFS installtion scripts that automate the steps described on http://sitepins.net/guides/install-ipfs:
   	**go-ipfs** 	        Installer for golang based installtion for RPi3
