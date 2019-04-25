@@ -29,4 +29,10 @@ There are variables defined at the top of the script you can set, but the defaul
 The Go language seems to change versions regularly, and it may be necessary to change this if you see errors the version is unavailable. I am not aware of a method to install "the latest" version of Go, and if there were it may break the ipfs-update program if it isn't compatible with the latest Go language version.
 
 The amd64 installer also has a setting for the method to start IPFS upon OS startup. The default is SYSD=1 to use systemd. If set to 0 the alternate method of using @reboot with cron is used.
+
+All the scripts accept an optional command line parameter to override the default storage of 75% available disk space. Provide an integer representing the number of gigabytes you wish to devote to IPFS storage, such as:
+
+    $> sudo ./ipfs-install 16
+
+Which sets the ipfs storageMax parameter to 16G. 
  
