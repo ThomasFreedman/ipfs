@@ -5,7 +5,7 @@
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
-WAIT=1                               # Set to 1 to wait fo confirmation to continue each step
+WAIT=0                               # Set to 1 to wait fo confirmation to continue each step
 SYSD=1                               # Set to 1 to use systemd, 0 for @reboot & cron
 DISTUP=0                             # Set to 1 to do a dist-upgrade
 GOVER=1.10.1                         # Go language version to install
