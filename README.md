@@ -11,3 +11,12 @@ Each have their merrits and issues. These scripts provide a "grandma just button
 I wouldn't say installing any OS is easy for grandma. Depending on the chosen OS some are easier than others. The main focus here is getting IPFS installed on a fresh OS installation, not what it takes to get the base OS installed.
 
 Once IPFS is installed, which is what these scripts do with almost no human intervention, the next task to accomplish is getting content off from centralized media platforms and onto IPFS. That requires standards and conventions for pinning, metadata capture indexing. 
+
+Currently there are 3 IPFS installtion scripts:
+  **go-ipfs** 	        Installer for golang based installtion for RPi3
+	**install-ipfs** 	    Installer for siderus / apt installation for RPi3
+	**go-ipfs-amd64** 	  Installer for 64 bit Linux OS (only tested with Debian) using golang
+  
+Once you have your base operating ststem installed, copy one of these installers to your target system and run it to install IPFS. These are bash shell scripts, and must be run as root or with a sudo prefix. No command line arguments are necessary. They will create an "ipfs" account you can login with, set the maximum space devoted to IPFS storage to 75% of available disk space, and create an init.log file in /home/ipfs/.ipfs/ with the IPFS node hash ID. 
+
+The defaults used are defined at the top of the script, such as whether to pause after each step during installation (WAIT=1) or whether to perform a distribution upgrade (DIST=1). 
