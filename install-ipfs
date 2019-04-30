@@ -2,19 +2,6 @@
 
 # This script will install IPFS software and establish initial settings.
 # This must be executed with root privileges or with sudo.
-#
-# Options:
-
-usage() {
-  echo "None of the following options are required (default values will be used):"
-  echo "-a == autostart method, 0 or 1. 0 == systemd (default), 1 == cron @reboot"
-  echo "-d == distribution upgrade, 0 or 1. Standard update/upgrade only (default) "
-  echo "-g == go version. Default is NoGo. Use 1.10.1 if -g and no option value provided"
-  echo "-m == max storage space. Default is 75% of disk. Option value integer in gigabytes"
-  echo "-n == install from siderus apt repo. Default, not Go. Invalid if -g is specified"
-  echo "-s == Single step / debug. Default is no waiting, non single step / debug mode"
-  echo "-h == print this usage info and exit. Also for --help"
-}
 
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root, or prefix with 'sudo'" ; exit 1 ; fi
 
@@ -27,7 +14,19 @@ AUTO=0                             # Default autostart method 0 == systemd, 1 ==
 WAIT=0                             # Default value for single step / debug mode (no wait)
 DISTUP=0                           # Default value for dist-upgrade (don't do it!)
 GOVER=NoGo                         # Default Go language version (Don't use go version)
+DEFGO=1.10.1                       # Default version to use with -g if not specified
+
 CONFIG=/home/ipfs/.ipfs/config     # IPFS configuration file
+
+usage() {
+  echo "$0 [-a] [-d] [-g[version] ] [-m<int> ] [-s] [-h | --help]"
+  echo "-a == autostart method. Use cron @reboot instead of systemd unit"
+  echo "-d == distribution upgrade. Specify -d to do a dist-upgrade"
+  echo "-g == go version. Default is $DEFGO if -g and no option value provided"
+  echo "-m == max storage space. Default is 75% of disk. Option value integer in gigabytes"
+  echo "-s == Single step / debug. Default is no waiting, non single step / debug mode"
+  echo "-h == print this usage info and exit. Also for --help"
+}
 
 # Determine OpSys (Raspbian or Debian)
 OS=`lsb_release -is`
@@ -43,67 +42,41 @@ fi
 
 # Make sure we have enhanced getopt -- probably not required for most Linux distros
 getopt --test
-if [ $? -ne 4 ] then echo "Ouch! getopt not avialable on this system - Bye!"; exit 1; fi
+if [ $? -ne 4 ]; then echo "Ouch! getopt not available on this system - Bye!"; exit 1; fi
 
 # Read command line options
-OPTS=`getopt -o a::dg::m:nsh --long help -name "$0" -- "$@"`
+OPTS=`getopt -o adg::m:sh --long help -n "$0" -- "$@"`
 eval set -- "$OPTS"
 
 # extract options and their arguments and set appropriate variables.
-while true ; do
+while true; do
     case "$1" in
-        -a)
-            if [ "$2" != "" ]; then
-              AUTO=$2;
-              echo "Will use golang version $GOVER"
-              shift;
-            else
-            SYSD=0
-            shift
-            ;;
-        -d)
-            DISTUP=1
-            shift
-            ;;
-        -g)
-            if [ "$2" != "" ]; then
+        -a) AUTO=1;   shift ;;
+        -d) DISTUP=1; shift ;;
+        -g) if [ "$2" != "" ]; then
               GOVER=$2;
               echo "Will use golang version $GOVER"
-              shift;
             else
-              GOVER=1.10.1
+              GOVER=$DEFGO
             fi
-            shift
+            shift 2
             ;;
-        -m)
-            if [ "$2" != "" ]; then
-              if ! [ -z "${2//[0-9]}" ]; then          # Positive number?
-                echo "-m requires a positive integer"
-                exit 1
-              fi
-              STORAGE_MAX=$2;
-              shift;
-            fi
-            shift
-            ;;
-        -n)
-            if [ "$GOVER" != "NoGo" ]; then
-              echo "Cannot use both -g and -n options!"
+        -m) if ! [ -z "${2//[0-9]}" ]; then          # Positive number?
+              echo "-m requires a positive integer (gigabytes)"
               exit 1
             fi
-            shift
-            break
+            STORAGE_MAX="$2G";
+            shift 2
             ;;
-        -h|--help)
-            usage()
-            exit 0
-        *)
-            echo "No such option: $1" >&2
-            exit 1
-            ;;
+        -h|--help) usage; exit 0 ;;
+        -s) WAIT=1; shift ;;
+        --) shift;  break ;;
+        *) echo "No such option: $1" >&2; exit 1 ;;
     esac
 done
 
+# Show options we'll use for this run
+echo "AUTO=$AUTO, WAIT=$WAIT, DISTUP=$DISTUP, GOVER=$GOVER, ARCH=$ARCH, STORAGE_MAX=$STORAGE_MAX"
 
 if [ ! -f ready4ipfs ]; then
   if [ ! ping -q -w 1 -c 1 storage.googleapis.com > /dev/null ]; then
@@ -164,8 +137,8 @@ else
     echo "Installing binary golang version $GOVER from googleapis. Please be patient..."
     wget https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz
     tar -C /usr/local -xzf go$GOVER.linux-$ARCH.tar.gz
-    echo 'export GOPATH=/home/$USER/go' > /usr/local/bin/goInit
-    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
+    echo 'export GOPATH=/home/$USER/go' >> /usr/local/bin/goInit
+    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' > /usr/local/bin/goInit
 
     echo "export GOPATH=/root/go" >> /root/.profile
     echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
@@ -206,7 +179,7 @@ sed -i "s/~/\"/g" $CONFIG
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
-if [ $AUTO == 0 ]; then  # For some unknown reason this doesn't always work on debian minimal server
+if [ AUTO == 0 ]; then  # For some unknown reason this doesn't always work on debian minimal server
   echo "Creating SystemD unit to start IPFS on reboot..."
   (
   cat <<SYSD_UNIT
