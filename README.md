@@ -25,4 +25,5 @@ Once you have your base operating system installed, copy one of these scripts to
 The Go language seems to change versions regularly, and it may be necessary to change the version if you see a version is unavailable. I am not aware of a method to install "the latest" version of Go (but latest version of ipfs is possible using go), and if there were it may break the ipfs-update program if it isn't compatible with the latest Go language version.
 
 See the options for the unified installer enter:
+
     $>./install-ipfs [-h | -help]
