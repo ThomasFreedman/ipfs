@@ -87,7 +87,7 @@ while true ; do
             shift
             ;;
         -n)
-            if [ $GOVER ]; then
+            if [ "$GOVER" != "NoGo" ]; then
               echo "Cannot use both -g and -n options!"
               exit 1
             fi
