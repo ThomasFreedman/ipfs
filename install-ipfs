@@ -164,8 +164,8 @@ else
     echo "Installing binary golang version $GOVER from googleapis. Please be patient..."
     wget https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz
     tar -C /usr/local -xzf go$GOVER.linux-$ARCH.tar.gz
-    echo 'export GOPATH=/home/$USER/go' >> /usr/local/bin/goInit
-    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' > /usr/local/bin/goInit
+    echo 'export GOPATH=/home/$USER/go' > /usr/local/bin/goInit
+    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
 
     echo "export GOPATH=/root/go" >> /root/.profile
     echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
