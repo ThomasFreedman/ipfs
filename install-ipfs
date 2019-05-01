@@ -78,8 +78,8 @@ while true; do
     esac
 done
 
-# Show options we'll use for this run
-echo "AUTO=$AUTO, WAIT=$WAIT, DISTUP=$DISTUP, GOVER=$GOVER, ARCH=$ARCH, STORAGE_MAX=$STORAGE_MAX"
+# Show options parsed for this installation
+echo "ARCH=$ARCH, AUTO=$AUTO, DISTUP=$DISTUP, RPI_UFW=$RPI_UFW, GOVER=$GOVER, STORAGE_MAX=$STORAGE_MAX, WAIT=$WAIT"
 
 if [ ! -f ready4ipfs ]; then
   if [ ! ping -q -w 1 -c 1 storage.googleapis.com > /dev/null ]; then
