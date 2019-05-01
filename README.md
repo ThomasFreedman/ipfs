@@ -63,6 +63,8 @@ Test5 - Debian Vultr VPS, stretch server, installation using all default options
 Test6 - Debian Vultr VPS, stretch server, installation using -g option:
 - golang version 1.10.1 (-g without a version)
 
+I also verified the node's web interface (see below) was accessible using ssh tunneling, however the IPFS configuration must be changed, and requires the port info of the ssh tunnel to update the ipfs config file. This makes the webui through ssh tunneling less dynamic, as it ties IPFS node config to the web client host.
+
 
 ## Accessing the Web Interface (/webui)
 If you are not using a headless (i.e. a non-graphical desktop) you should be able to access the web interface at http://localhost:5001/webui. On headless servers access it through an "ssh tunnel" by following this procedure:
