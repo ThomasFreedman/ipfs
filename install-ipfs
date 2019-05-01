@@ -80,6 +80,8 @@ done
 
 # Show options parsed for this installation
 echo "OS=$OS, ARCH=$ARCH, AUTO=$AUTO, DISTUP=$DISTUP, RPI_UFW=$RPI_UFW, GOVER=$GOVER, STORAGE_MAX=$STORAGE_MAX, WAIT=$WAIT"
+echo ""
+if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
 if [ ! -f ready4ipfs ]; then
   ping -q -w 1 -c 1 storage.googleapis.com > /dev/null 2>&1
