@@ -86,7 +86,7 @@ if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed
 if [ ! -f ready4ipfs ]; then
   ping -q -w 1 -c 1 storage.googleapis.com > /dev/null 2>&1
   if [ $? -ne 0 ]; then
-    if [$OS == "Raspbian" ]; then
+    if [ $OS == "Raspbian" ]; then
       # Make sure the system is configured for network access
       echo ""
       echo "The system must be configured, at least to setup networking."
