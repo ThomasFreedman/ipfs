@@ -82,7 +82,8 @@ done
 echo "OS=$OS, ARCH=$ARCH, AUTO=$AUTO, DISTUP=$DISTUP, RPI_UFW=$RPI_UFW, GOVER=$GOVER, STORAGE_MAX=$STORAGE_MAX, WAIT=$WAIT"
 
 if [ ! -f ready4ipfs ]; then
-  if [ ! ping -q -w 1 -c 1 storage.googleapis.com > /dev/null 2>&1 ]; then
+  ping -q -w 1 -c 1 storage.googleapis.com > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
     if [$OS == "Raspbian" ]; then
       # Make sure the system is configured for network access
       echo ""
