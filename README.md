@@ -22,8 +22,8 @@ Currently there are 4 IPFS installation scripts that automate the steps describe
   
 Once you have your base operating system installed, copy one of these scripts to your target system and run it to install IPFS. These are bash shell scripts, and must be run as root or with a sudo prefix. No command line arguments are necessary. They will create an "ipfs" account you can login with, set the maximum space devoted to IPFS storage to 75% of available disk space, and create an init.log file in /home/ipfs/.ipfs/ with the IPFS node hash ID. 
 
-The Go language seems to change versions regularly, and it may be necessary to change the version if you see a version is unavailable. I am not aware of a method to install "the latest" version of Go (but latest version of ipfs is possible using go), and if there were it may break the ipfs-update program if it isn't compatible with the latest Go language version.
+The Go language seems to change versions regularly, and it may be necessary to change the version with the -g option if you see a the default version is unavailable. I am not aware of a method to install "the latest" version of Go (but latest version of IPFS is possible using go), and if there were it may break the ipfs-update program if it isn't compatible with the latest Go language version.
 
-See the options for the unified installer enter:
+To see all options for the unified installer enter:
 
-    $>./install-ipfs [-h | -help]
+    $>sudo ./install-ipfs [-h | -help]
