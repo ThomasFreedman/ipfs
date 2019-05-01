@@ -132,6 +132,7 @@ if [ "$GOVER" == "NoGo" ]; then
     apt install -y apt-transport-https curl
     curl https://get.siderus.io/key.public.asc | apt-key add -
     echo "deb https://get.siderus.io/ apt/" | tee -a /etc/apt/sources.list.d/siderus.list
+    IPFS=/usr/bin/ipfs
     apt update
   fi
 else
@@ -141,13 +142,14 @@ else
     wget https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz
     tar -C /usr/local -xzf go$GOVER.linux-$ARCH.tar.gz
     echo 'export GOPATH=/home/$USER/go' >> /usr/local/bin/goInit
-    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' > /usr/local/bin/goInit
+    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
 
     echo "export GOPATH=/root/go" >> /root/.profile
     echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
     popd
     mkdir /root/go
     source /root/.profile
+    IPFS=/home/ipfs/go/bin/ipfs    
     go version
   else
     echo "No such golang: https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz"
@@ -158,8 +160,8 @@ echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
 
 echo "Installing IPFS and supporting packages. Please be patient..."
-apt-get -y install tmux
-if [ $RPI_UFW == 1 ]; then apt-get -y install ufw; fi
+apt-get -y install git tmux
+if [[ $OS != "Raspbian" || $RPI_UFW == 1 ]]; then apt-get -y install ufw; fi
 if [ $GOVER == "NoGo" ]; then
   apt-get -y install ipfs
 else
@@ -197,7 +199,7 @@ User=ipfs
 LimitNOFILE=65536
 Environment="IPFS_FD_MAX=4096"
 Environment="IPFS_PATH=/home/ipfs/.ipfs"
-ExecStart=/home/ipfs/go/bin/ipfs daemon --enable-namesys-pubsub
+ExecStart=$IPFS daemon --enable-namesys-pubsub
 Restart=on-failure
 [Install]
 WantedBy=multi-user.target
