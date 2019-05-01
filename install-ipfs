@@ -20,13 +20,13 @@ DEFGO=1.10.1                       # Default version to use with -g if not speci
 CONFIG=/home/ipfs/.ipfs/config     # IPFS configuration file
 
 usage() {
-  echo "$0 [-a] [-d] [-g[version] ] [-m<int> ] [-s] [-h | --help]"
+  echo "$0 [-a] [-d] [-g[version] ] [-m<int> ] [-w] [-h | --help]"
   echo "-a == autostart method. Use cron @reboot instead of systemd unit"
   echo "-d == distribution upgrade. Specify -d to do a dist-upgrade"
   echo "-f == firewall on Raspberry Pi. Default is no. Use -f to enable on the RPi"
   echo "-g == go version. Default is $DEFGO if -g and no option value provided"
   echo "-m == max storage space. Default is 75% of disk. Option value integer in gigabytes"
-  echo "-s == Single step / debug. Default is no waiting, non single step / debug mode"
+  echo "-w == Wait after each step / debug mode. Default is no waiting"
   echo "-h == print this usage info and exit. Also for --help"
 }
 
@@ -47,7 +47,7 @@ getopt --test
 if [ $? -ne 4 ]; then echo "Ouch! getopt not available on this system - Bye!"; exit 1; fi
 
 # Read command line options
-OPTS=`getopt -o adfg::m:sh --long help -n "$0" -- "$@"`
+OPTS=`getopt -o adfg::m:wh --long help -n "$0" -- "$@"`
 eval set -- "$OPTS"
 
 # extract options and their arguments and set appropriate variables.
@@ -72,17 +72,17 @@ while true; do
             shift 2
             ;;
         -h|--help) usage; exit 0 ;;
-        -s) WAIT=1; shift ;;
+        -w) WAIT=1; shift ;;
         --) shift;  break ;;
         *) echo "No such option: $1" >&2; exit 1 ;;
     esac
 done
 
 # Show options parsed for this installation
-echo "ARCH=$ARCH, AUTO=$AUTO, DISTUP=$DISTUP, RPI_UFW=$RPI_UFW, GOVER=$GOVER, STORAGE_MAX=$STORAGE_MAX, WAIT=$WAIT"
+echo "OS=$OS, ARCH=$ARCH, AUTO=$AUTO, DISTUP=$DISTUP, RPI_UFW=$RPI_UFW, GOVER=$GOVER, STORAGE_MAX=$STORAGE_MAX, WAIT=$WAIT"
 
 if [ ! -f ready4ipfs ]; then
-  if [ ! ping -q -w 1 -c 1 storage.googleapis.com > /dev/null ]; then
+  if [ ! ping -q -w 1 -c 1 storage.googleapis.com > /dev/null 2>&1 ]; then
     if [$OS == "Raspbian" ]; then
       # Make sure the system is configured for network access
       echo ""
