@@ -1,3 +1,4 @@
+## The Easy Way to Install IPFS
 These are scripts to install IPFS onto Raspberry Pi3 or Pi3+ microcomputers, AND any hardware (laptops, old computers etc) a Debian Linux OS can be installed on. Note that only 64 bit systems are supported.
 
 Potentially almost any Linux OS could be used, however these scripts have only been tested on Debian and Raspberry Pi3 (RPi3 or RPi3+) as written. The Debian Net Installer was used for all non RPi systems.
@@ -27,3 +28,58 @@ The Go language seems to change versions regularly, and it may be necessary to c
 To see all options for the unified installer enter:
 
     $>sudo ./install-ipfs [-h | -help]
+
+## Testing Performed
+Testing has been done on 2 different hardware platforms:
+1. Raspberry Pi model 3
+2. A VPS host with Debian 9
+
+And 3 different operating system variations:
+1. Raspbian full desktop installed with NOOBS 3.0
+2. Raspbian Lite (headless) installed directly onto sd card with dd
+3. Debian 9 (Stretch) installed via hosting service control panel
+
+The other primary variation was the ipfs source, either the siderus repository or golang update-ipfs program from googleapis.com. This yielded 6 distinct tests to verify script operation. Option permutations were not explicitly tested, but were verified prior to the live system installation tests. Some bugs may surface as a result of this methodology. 
+
+The focus of the testing was to verify a functional IPFS node installation, installed with the install-ipfs script using no options (all defaults, siderus apt repo) and with the -g option. This verifies the installation using the siderus apt repository and the golang ipfs-update approach (googleapis.com). 
+
+### Raspbian testing on Raspberry Pi3
+Test1 - NOOBS, rpi stretch with full desktop, installation using all default options
+- siderus apt repo
+
+Test2 - NOOBS, rpi stretch with full desktop, installation using -g option:
+- golang version 1.10.1 (-g without a version)
+
+Test3 - Raspbian Lite, rpi stretch with full desktop, installation using all default options
+- siderus apt repo
+
+Test4 - Raspbian Lite, rpi stretch with full desktop, installation using -g option:
+- golang version 1.10.1 (-g without a version)
+
+### Debian testing on VPS
+Test5 - Debian Vultr VPS, stretch server, installation using all default options
+- siderus apt repo
+
+Test6 - Debian Vultr VPS, stretch server, installation using -g option:
+- golang version 1.10.1 (-g without a version)
+
+
+## Accessing the Web Interface (/webui)
+If you are not using a headless (i.e. a non-graphical desktop) you should be able to access the web interface at http://localhost:5001/webui. On headless servers access it through an "ssh tunnel" by following this procedure:
+
+1. Make sure you have configured your IPFS node for ssh access and you can login via ssh. 
+2. Login with ssh this way  to create the tunnel:
+   `ssh -L <port>:localhost:5001 ipfs@<IPFS node address>`
+  You can use any high port value above 1024 not being used, such as 50001. This is a port on the client (broswer) machine.
+3. This will log you into the IPFS server node with a tunnel. Then run these 2 commands on the IPFS server:
+```    
+    $ ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["http://127.0.0.1:<port>", "http://127.0.0.1:5001", "https://webui.ipfs.io"]'
+    $ ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
+```
+After changing the configuration you will need to restart the ipfs daemon, or reboot the node and then log back in with ssh
+to re-establish the ssh tunnel. 
+
+If you used the default systemd autostart method, you can probably avoid the reboot and simply restart the daemon with:
+`sudo systemctl restart ipfs`. Now you can point your web browser to this URL to access the node's web interface:
+`http://127.0.0.1:<port>/webui`
+
