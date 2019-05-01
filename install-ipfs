@@ -225,3 +225,8 @@ fi
 
 cat /home/ipfs/.ipfs/init.log
 echo "IPFS is now installed on this system."
+echo ""
+echo "Now set a password for the ipfs account. Press ^C and abort this now"
+echo "unless you are certain you have setup your system with appropriate"
+echo "locale, keyboard etc. Otherwise you may not be able to login."
+passwd ipfs
