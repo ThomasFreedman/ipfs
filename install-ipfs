@@ -15,16 +15,16 @@ WAIT=0                             # Default value for single step / debug mode 
 DISTUP=0                           # Default value for dist-upgrade (don't do it!)
 RPI_UFW=0                          # Default value to install firewall on RPi (no)
 GOVER=NoGo                         # Default Go language version (Don't use go version)
-DEFGO=1.10.1                       # Default version to use with -g if not specified
+DEFGO=1.10.1                       # Default version to use (tho now -g requires version)
 
 CONFIG=/home/ipfs/.ipfs/config     # IPFS configuration file
 
 usage() {
-  echo "$0 [-a] [-d] [-g[version] ] [-m<int> ] [-w] [-h | --help]"
+  echo "$0 [-a] [-d] [-g <version> ] [-m <int> ] [-w] [-h | --help]"
   echo "-a == autostart method. Use cron @reboot instead of systemd unit"
   echo "-d == distribution upgrade. Specify -d to do a dist-upgrade"
   echo "-f == firewall on Raspberry Pi. Default is no. Use -f to enable on the RPi"
-  echo "-g == go version. Default is $DEFGO if -g and no option value provided"
+  echo "-g == go version. -g requires a version"
   echo "-m == max storage space. Default is 75% of disk. Option value integer in gigabytes"
   echo "-w == Wait after each step / debug mode. Default is no waiting"
   echo "-h == print this usage info and exit. Also for --help"
@@ -47,7 +47,9 @@ getopt --test
 if [ $? -ne 4 ]; then echo "Ouch! getopt not available on this system - Bye!"; exit 1; fi
 
 # Read command line options
-OPTS=`getopt -o adfg::m:wh --long help -n "$0" -- "$@"`
+# NOTE: double colons after g option (should be optional param for -g) swallows -m !!!
+# getopt from util-linux 2.29.2 on Raspbian Stretch Lite OS, 4/8/2019 release
+OPTS=`getopt -o adfg:m:wh --long help -n "$0" -- "$@"`
 eval set -- "$OPTS"
 
 # extract options and their arguments and set appropriate variables.
@@ -57,7 +59,7 @@ while true; do
         -d) DISTUP=1;  shift ;;
         -f) RPI_UFW=1; shift ;;
         -g) if [ "$2" != "" ]; then
-              GOVER=$2;
+              GOVER=$2
               echo "Will use golang version $GOVER"
             else
               GOVER=$DEFGO
@@ -139,25 +141,25 @@ if [ "$GOVER" == "NoGo" ]; then
     apt update
   fi
 else
-  if [ ! -e /usr/local/bin/go$GOVER.linux-$ARCH.tar.gz ]; then
+  if [ ! -e "/usr/local/bin/go$GOVER.linux-$ARCH.tar.gz" ]; then
     pushd /usr/local/bin
     echo "Installing binary golang version $GOVER from googleapis. Please be patient..."
     wget https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz
     tar -C /usr/local -xzf go$GOVER.linux-$ARCH.tar.gz
-    echo 'export GOPATH=/home/$USER/go' >> /usr/local/bin/goInit
-    echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
-
-    echo "export GOPATH=/root/go" >> /root/.profile
-    echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
     popd
-    mkdir /root/go
-    source /root/.profile
-    IPFS=/home/ipfs/go/bin/ipfs    
-    go version
-  else
-    echo "No such golang: https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz"
+  fi
+  if [ ! -e "/usr/local/bin/go$GOVER.linux-$ARCH.tar.gz" ]; then
+    echo "No such golang? https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz"
     exit -1
   fi
+  echo 'export GOPATH=/home/$USER/go' > /usr/local/bin/goInit
+  echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
+
+#  echo "export GOPATH=/root/go" >> /root/.profile
+#  echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
+
+  if [ ! -d /root/go ]; then mkdir /root/go; fi
+  go version
 fi
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
@@ -168,10 +170,34 @@ if [[ $OS != "Raspbian" || $RPI_UFW == 1 ]]; then apt-get -y install ufw; fi
 if [ $GOVER == "NoGo" ]; then
   apt-get -y install ipfs
 else
-  runuser -l ipfs -c 'go get -u github.com/ipfs/ipfs-update'
-  runuser -l ipfs -c 'ipfs-update install latest'
+  source /usr/local/bin/goInit             # Set ipfs env
+  IPFS=/home/ipfs/go/bin/ipfs              # This is used for systemD unit
+  if [ ! -e "/usr/local/bin/ipfs-update" ]; then
+    echo "Installing ipfs-update..."
+#   runuser -l ipfs -c 'go get -u github.com/ipfs/ipfs-update' # No worky anymore!
+    curl https://dist.ipfs.io/ipfs-update/v1.5.2/ipfs-update_v1.5.2_linux-arm.tar.gz > ipfsUpdate.tgz
+    tar -xzf ipfsUpdate.tgz
+    mv ipfs-update/ipfs-update /usr/local/bin/.  # Copy binary into place
+    if [ "`which ipfs-update`" != "/usr/local/bin/ipfs-update" ]; then
+      echo "Ouch - failed to install ipfs-update, Bye!"
+      exit -1
+    else
+      rm -rf ipfs-update  # Remove the folder
+    fi
+  fi
+  if [ "`which ipfs`" != "/usr/local/bin/ipfs" ]; then
+    echo "Installing latest version of ipfs..."
+#    runuser -l ipfs -c 'ipfs-update install latest'
+    runuser -l ipfs -c 'ipfs-update --verbose install --no-check latest'
+    if [ "`which ipfs`" != "/usr/local/bin/ipfs" ]; then
+      echo "ipfs-update failed to install ipfs, Bye!"
+      exit -1
+    fi
+  fi
 fi
-runuser -l ipfs -c 'ipfs init > ~/.ipfs/init.log 2>&1'   # Initialize IPFS and log output
+
+# Initialize IPFS and log output
+runuser -l ipfs -c 'ipfs init --profile server > ~/.ipfs/init.log 2>&1'
 apt -y autoremove
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
