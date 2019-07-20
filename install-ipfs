@@ -46,7 +46,7 @@ fi
 getopt --test
 if [ $? -ne 4 ]; then echo "Ouch! getopt not available on this system - Bye!"; exit 1; fi
 
-# Read command line options
+# Process command line options
 # NOTE: double colons after g option (should be optional param for -g) swallows -m !!!
 # getopt from util-linux 2.29.2 on Raspbian Stretch Lite OS, 4/8/2019 release
 OPTS=`getopt -o adfg:m:wh --long help -n "$0" -- "$@"`
@@ -140,7 +140,7 @@ if [ "$GOVER" == "NoGo" ]; then
     IPFS=/usr/bin/ipfs
     apt update
   fi
-else
+else  # Install requested go language version if not already installed
   if [ ! -e "/usr/local/bin/go$GOVER.linux-$ARCH.tar.gz" ]; then
     pushd /usr/local/bin
     echo "Installing binary golang version $GOVER from googleapis. Please be patient..."
@@ -148,18 +148,25 @@ else
     tar -C /usr/local -xzf go$GOVER.linux-$ARCH.tar.gz
     popd
   fi
-  if [ ! -e "/usr/local/bin/go$GOVER.linux-$ARCH.tar.gz" ]; then
-    echo "No such golang? https://storage.googleapis.com/golang/go$GOVER.linux-$ARCH.tar.gz"
-    exit -1
-  fi
+
+  # Create a bit of code to set env vars for all to source in their .profile
   echo 'export GOPATH=/home/$USER/go' > /usr/local/bin/goInit
   echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /usr/local/bin/goInit
 
-#  echo "export GOPATH=/root/go" >> /root/.profile
-#  echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> /root/.profile
+  # Don't add to .profile if it's already there
+  if ! grep -Fq goInit ~/.profile; then
+    echo "source /usr/local/bin/goInit" >> ~/.profile
+  fi
+  source ~/.profile # We need those vars now to proceed
 
-  if [ ! -d /root/go ]; then mkdir /root/go; fi
-  go version
+  VER=`go version`  # Verify Installation
+  if [[ ! "$VER" =~ $GOVER ]]; then
+    echo "Bummer - failed to install go version $GOVER, Bye!"
+    exit -1
+  else
+    echo "$VER is installed"
+    if [ ! -d /root/go ]; then mkdir /root/go; fi
+  fi
 fi
 echo ""
 if [ $WAIT == 1 ]; then read -n 1 -p "Press ^C to exit, any other key to proceed..." key; fi
@@ -170,7 +177,6 @@ if [[ $OS != "Raspbian" || $RPI_UFW == 1 ]]; then apt-get -y install ufw; fi
 if [ $GOVER == "NoGo" ]; then
   apt-get -y install ipfs
 else
-  source /usr/local/bin/goInit             # Set ipfs env
   IPFS=/home/ipfs/go/bin/ipfs              # This is used for systemD unit
   if [ ! -e "/usr/local/bin/ipfs-update" ]; then
     echo "Installing ipfs-update..."
@@ -187,8 +193,8 @@ else
   fi
   if [ "`which ipfs`" != "/usr/local/bin/ipfs" ]; then
     echo "Installing latest version of ipfs..."
-#    runuser -l ipfs -c 'ipfs-update install latest'
-    runuser -l ipfs -c 'ipfs-update --verbose install --no-check latest'
+    runuser -l ipfs -c 'ipfs-update install latest'
+#    runuser -l ipfs -c 'ipfs-update --verbose install --no-check latest'
     if [ "`which ipfs`" != "/usr/local/bin/ipfs" ]; then
       echo "ipfs-update failed to install ipfs, Bye!"
       exit -1
