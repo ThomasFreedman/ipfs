@@ -1,6 +1,8 @@
 ## The Easy Way to Install IPFS
 These are scripts to install IPFS onto Raspberry Pi3 or Pi3+ microcomputers, AND any hardware (laptops, old computers etc) a Debian Linux OS can be installed on. Note that only 64 bit systems are supported.
 
+These scripts will likely need updating as IPFS is developed and new versions made available. After a few months from when the install-ipfs script was published, it stopped working due to the Go and Siderus repos for the core IPFS code changing. The installer script provides for different versions, but required changes anyway.
+
 Potentially almost any Linux OS could be used, however these scripts have only been tested on Debian and Raspberry Pi3 (RPi3 or RPi3+) as written. The Debian Net Installer was used for all non RPi systems.
 
 There are 2 different methods used to install IPFS:
